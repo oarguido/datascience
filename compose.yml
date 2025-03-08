@@ -1,0 +1,39 @@
+services:
+  # Define the FastAPI service.
+  fastapi:
+    build:
+      context: .  # Use the current directory as the build context.
+      dockerfile: Dockerfile.fastapi  # Use the Dockerfile in the context directory.
+    container_name: fastapi  # Set the container name.
+    ports:
+      - "${FASTAPI_PORT}:${FASTAPI_PORT}"  # Map the port from .env to the container.
+    volumes:
+      - ./models:/app/models  # Mount the models directory.
+      - ./db:/app/db  # Mount the db directory.
+    networks:
+      - aidi-project-network # Define the network for the service.
+    env_file:
+      - .env # Add the environment variables file to the service.
+
+  # Define the Streamlit service.
+  streamlit:
+    build:
+      context: .  # Use the current directory as the build context.
+      dockerfile: Dockerfile.streamlit  # Use the Dockerfile.streamlit in the context directory.
+    container_name: streamlit  # Set the container name.
+    ports:
+      - "${STREAMLIT_PORT}:${STREAMLIT_PORT}"  # Map the port from .env to the container.
+    volumes:
+      - ./models:/app/models  # Mount the models directory.
+    # Remove the command to use the default defined in the Dockerfile.
+    depends_on:
+      - fastapi # The streamlit depends on the fastapi service.
+    networks:
+      - aidi-project-network # Define the network for the service.
+    env_file:
+      - .env # Add the environment variables file to the service.
+
+# Define the custom network for the services.
+networks:
+  aidi-project-network:
+    driver: bridge  # Use the bridge network driver.
