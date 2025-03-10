@@ -15,7 +15,6 @@ load_dotenv()
 # Get environment variables with default values.
 FASTAPI_PORT = int(os.getenv("FASTAPI_PORT", 8000))
 STREAMLIT_PORT = int(os.getenv("STREAMLIT_PORT", 8501))
-# API_HOST = os.getenv("API_HOST", "fastapi")  # Removed unused variable
 API_BASE_URL = f"http://fastapi:{FASTAPI_PORT}"
 MODELS_DIR = os.getenv("MODELS_DIR", "models")
 DATABASE_FOLDER = os.getenv("DATABASE_FOLDER", "db")

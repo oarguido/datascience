@@ -34,10 +34,6 @@ DATABASE_FOLDER = os.getenv("DATABASE_FOLDER", "db")
 if not os.path.exists(MODELS_DIR):
     os.makedirs(MODELS_DIR)
 
-# Create the database directory if it does not exist.
-if not os.path.exists(DATABASE_FOLDER):
-    os.makedirs(DATABASE_FOLDER)
-
 
 # --- FastAPI Lifespan Events ---
 

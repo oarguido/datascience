@@ -4,7 +4,6 @@ import sqlite3
 # --- Configuration and Setup ---
 
 # Define the folder where the database file will be stored.
-# This value is obtained from an environment variable, with a default value of "db".
 DATABASE_FOLDER = os.getenv("DATABASE_FOLDER", "db")
 
 # Define the full path to the database file.
