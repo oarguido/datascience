@@ -39,7 +39,7 @@ def create_table():
                 hyperparameters TEXT,
                 confusion_matrix TEXT,
                 classification_report TEXT,
-                accuracy REAL
+                f1 REAL
             )
             """
         )
@@ -66,7 +66,7 @@ def create_model(
     dataset,
     model_name,
     hyperparameters,
-    accuracy,
+    f1,
     confusion_matrix,
     classification_report,
 ):
@@ -78,7 +78,7 @@ def create_model(
         dataset (str): The JSON representation of the dataset used for training.
         model_name (str): The name of the model (e.g., "kNN - k-Nearest Neighbors").
         hyperparameters (dict): The hyperparameters used during training.
-        accuracy (float): The accuracy of the trained model.
+        f1 (float): The F1-score (average) of the trained model.
         confusion_matrix (list): The confusion matrix of the trained model.
         classification_report (dict): The classification report of the trained model.
     """
@@ -89,7 +89,7 @@ def create_model(
         # Insert the model's metadata into the 'models' table.
         cursor.execute(
             """
-            INSERT INTO models (id, dataset, model_name, hyperparameters, confusion_matrix, classification_report, accuracy)
+            INSERT INTO models (id, dataset, model_name, hyperparameters, confusion_matrix, classification_report, f1)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
@@ -99,7 +99,7 @@ def create_model(
                 str(hyperparameters),
                 str(confusion_matrix),
                 str(classification_report),
-                accuracy,
+                f1,
             ),
         )
 
@@ -113,19 +113,23 @@ def get_model(model_id):
 
     Returns:
         tuple: A tuple containing the model's dataset, model_name, hyperparameters,
-            confusion_matrix, classification_report, and accuracy, or None if not found.
+            confusion_matrix, classification_report, and f1_score, or None if not found.
     """
     # Establish a connection to the SQLite database using a context manager.
-    with sqlite3.connect(DATABASE) as connection:
-        cursor = connection.cursor()
+    try:
+        with sqlite3.connect(DATABASE) as connection:
+            cursor = connection.cursor()
 
-        # Retrieve the model's metadata based on the model ID.
-        cursor.execute(
-            "SELECT dataset, model_name, hyperparameters, confusion_matrix, classification_report, accuracy FROM models WHERE id = ?",
-            (model_id,),
-        )
-        result = cursor.fetchone()
-    return result
+            # Retrieve the model's metadata based on the model ID.
+            cursor.execute(
+                "SELECT dataset, model_name, hyperparameters, confusion_matrix, classification_report, f1 FROM models WHERE id = ?",
+                (model_id,),
+            )
+            result = cursor.fetchone()
+        return result
+    except sqlite3.Error as e:
+        print(f"Error fetching model {model_id} from database: {e}")
+        return None
 
 
 # --- Prediction Operations ---

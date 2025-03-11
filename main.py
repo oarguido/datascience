@@ -8,11 +8,7 @@ import pandas as pd
 from database import create_model, create_prediction, create_table, get_model
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from sklearn.metrics import (
-    accuracy_score,
-    classification_report,
-    confusion_matrix,
-)
+from sklearn.metrics import classification_report, confusion_matrix, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -48,18 +44,13 @@ async def lifespan(app: FastAPI):
     """
     # Code to run on startup
     create_table()  # Create the database tables.
-    yield  # Yield control to the application.
-    # Code to run on shutdown (currently empty).
+    yield
 
 
 # --- FastAPI Application ---
 
 # Create the FastAPI application instance with the lifespan event handlers.
 app = FastAPI(lifespan=lifespan)
-
-# Dictionary to store trained models (in-memory for this example).
-# NOTE: In a production setting, consider using a persistent storage solution.
-trained_models = {}
 
 
 # --- API Endpoints ---
@@ -102,14 +93,7 @@ async def train_model(request_data: dict):
                             }
 
     Returns:
-        dict: A dictionary containing the model ID, accuracy, confusion matrix, and classification report.
-            Example:
-            {
-                "model_id": "some-uuid",
-                "accuracy": 0.95,
-                "confusion_matrix": [[10, 0], [1, 9]],
-                "classification_report": {"0": {"precision": 0.91, ...}, "1": {...}}
-            }
+        dict: A dictionary containing the model ID, f1 score, confusion matrix, and classification report.
 
     Raises:
         HTTPException: If there's a problem with the request or model training.
@@ -140,15 +124,25 @@ async def train_model(request_data: dict):
                     if (
                         model_data[1] == model_name
                         and model_data[2] == str(hyperparameters)
-                        and list(dataset.columns) == list(dataset_stored.columns)
+                        and "target" in dataset.columns
+                        and "target"
+                        in dataset_stored.columns  # check for target columns
+                        and list(dataset.drop("target", axis=1).columns)
+                        == list(
+                            dataset_stored.drop("target", axis=1).columns
+                        )  # compare columns excluding target
                     ):
                         # Return existing model details if a match is found.
                         return {
                             "model_id": id_without_extension,
                             "message": "Model with these parameters already exists!",
-                            "confusion_matrix": eval(model_data[3]),
-                            "classification_report": eval(model_data[4]),
-                            "accuracy": model_data[5],
+                            "confusion_matrix": eval(model_data[3])
+                            if model_data[3]
+                            else None,
+                            "classification_report": eval(model_data[4])
+                            if model_data[4]
+                            else None,
+                            "f1_score": model_data[5],
                         }
 
         # --- Data Splitting ---
@@ -170,7 +164,7 @@ async def train_model(request_data: dict):
             kernel = hyperparameters.get("kernel", "rbf")
             model = SVC(C=C, kernel=kernel)
         elif model_name == "DT - Decision Tree":
-            max_depth = hyperparameters.get("max_depth", None)
+            max_depth = hyperparameters.get("max_depth", 3)
             criterion = hyperparameters.get("criterion", "gini")
             model = DecisionTreeClassifier(max_depth=max_depth, criterion=criterion)
         else:
@@ -183,7 +177,7 @@ async def train_model(request_data: dict):
         y_pred = model.predict(X_test)
 
         # Calculate performance metrics.
-        accuracy = accuracy_score(y_test, y_pred)
+        f1 = f1_score(y_test, y_pred, average="weighted")
         # Convert confusion matrix to list for JSON serialization.
         conf_matrix = confusion_matrix(y_test, y_pred).tolist()
         # Convert classification report to dict for JSON serialization, handling zero division.
@@ -203,7 +197,7 @@ async def train_model(request_data: dict):
             dataset_json,
             model_name,
             hyperparameters,
-            accuracy,
+            f1,
             conf_matrix,
             class_report,
         )
@@ -212,7 +206,7 @@ async def train_model(request_data: dict):
         # Return the model ID and performance metrics.
         return {
             "model_id": model_id,
-            "accuracy": accuracy,
+            "f1_score": f1,
             "confusion_matrix": conf_matrix,
             "classification_report": class_report,
         }

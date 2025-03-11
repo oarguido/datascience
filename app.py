@@ -121,7 +121,7 @@ def train_model(dataset, model_name, hyperparameters):
         st.session_state["classification_report"] = model_info.get(
             "classification_report"
         )
-        st.session_state["accuracy"] = model_info.get("accuracy")
+        st.session_state["f1_score"] = model_info.get("f1_score")
 
         return model_info["model_id"], model_info
 
@@ -154,9 +154,8 @@ def make_prediction(model_id, input_data):
         return None
 
 
-# --- Streamlit Application ---
-
 # region Page Settings, Title, and Cleanup Button
+# --- Streamlit Application ---
 st.set_page_config(layout="wide", page_title="AIDI Project", page_icon=":computer:")
 
 # Sidebar Cleanup
@@ -181,7 +180,7 @@ if clear_button:
     st.session_state["clear_message_type"] = ""
 
 
-st.title("André Lima's AIDI Project")
+st.title("André Lima's ML AIDI Project")
 st.write(
     """
     - app.py (Frontend - Streamlit): handles the frontend of the application, providing 
@@ -197,7 +196,6 @@ st.write(
     ---
     """
 )
-# endregion
 
 # Wait until FastAPI is available
 st.write("Waiting for FastAPI to be ready...")
@@ -214,10 +212,11 @@ while retries < max_retries:
         st.write(f"FastAPI is not ready yet, retrying... ({retries}/{max_retries})")
 if retries == max_retries:
     st.error("Failed to connect to FastAPI after multiple retries.")
+# endregion
 
+# region Data Selection
 # --- Session State Initialization ---
 # Initialize session state variables to manage the application state across interactions.
-
 if "dataset_choice" not in st.session_state:
     st.session_state.dataset_choice = None
 if "selected_data" not in st.session_state:
@@ -233,8 +232,8 @@ if "confusion_matrix" not in st.session_state:
     st.session_state["confusion_matrix"] = None
 if "classification_report" not in st.session_state:
     st.session_state["classification_report"] = None
-if "accuracy" not in st.session_state:
-    st.session_state["accuracy"] = None
+if "f1_score" not in st.session_state:
+    st.session_state["f1_score"] = None
 
 # --- Dataset Selection Section ---
 st.subheader("1 - Choose a Dataset:")
@@ -257,7 +256,8 @@ if dataset_choice != st.session_state.dataset_choice:
     st.session_state["model_id"] = None
     st.session_state["confusion_matrix"] = None
     st.session_state["classification_report"] = None
-    st.session_state["accuracy"] = None
+    st.session_state["f1_score"] = None
+
 
 # Handle Iris Dataset selection.
 if dataset_choice == "Iris Dataset":
@@ -310,9 +310,10 @@ elif dataset_choice == "Upload a CSV file":
             "Please upload a CSV file. The dataset must have a column named 'target'.",
             icon="ℹ️",
         )
-
 st.write("---")
+# endregion
 
+# region Model Selection
 # --- Model Selection Section ---
 st.subheader("2 - Choose a Model and it's Hyperparameters: ")
 model_name = st.selectbox(
@@ -348,7 +349,7 @@ elif model_name == "SVM - Support Vector Machine":
         del st.session_state["max_depth"]
 elif model_name == "DT - Decision Tree":
     hyperparameter_values["max_depth"] = st.slider(
-        "Max Depth", 1, 10, None, key="max_depth"
+        "Max Depth", 1, 10, 3, key="max_depth"
     )
     hyperparameter_values["criterion"] = st.selectbox(
         "Criterion", ["gini", "entropy"], key="criterion"
@@ -358,7 +359,9 @@ elif model_name == "DT - Decision Tree":
     if "C" in st.session_state:
         del st.session_state["C"]
 st.write("---")
+# endregion
 
+# region Train Model
 # --- Submit Data for Model Training ---
 st.subheader("3 - Train the Model and check it's metrics: ")
 if st.button("Train Model", key="train_button"):
@@ -379,24 +382,28 @@ if st.button("Train Model", key="train_button"):
 
             # Display model metrics if the model was trained successfully.
             if model_id:
-                st.write(f"Model ID: {st.session_state['model_id']}")
+                st.write(f"**Model ID:** {st.session_state['model_id']}")
+
+                if st.session_state["f1_score"] is not None:
+                    st.write(f"**F1-Score:** {st.session_state['f1_score']:.2%}")
+
                 if st.session_state["confusion_matrix"] is not None:
-                    st.write("Confusion Matrix:")
+                    st.write("**Confusion Matrix:**")
                     conf_matrix_df = pd.DataFrame(st.session_state["confusion_matrix"])
                     st.dataframe(conf_matrix_df)
 
                 if st.session_state["classification_report"] is not None:
-                    st.write("Classification Report:")
+                    st.write("**Classification Report:**")
                     report = st.session_state["classification_report"]
                     report_df = pd.DataFrame(report).transpose()
                     st.dataframe(report_df)
             else:
                 st.write("Something went wrong during model training.")
-
 st.write("---")
 # endregion
 
 # region Predict
+# --- Make a Prediction ---
 st.subheader("4 - Make a Prediction:")
 if "model_id" not in st.session_state:
     st.write("Train a model before trying to predict.")
