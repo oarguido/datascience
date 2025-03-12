@@ -20,6 +20,7 @@ MODELS_DIR = os.getenv("MODELS_DIR", "models")
 DATABASE_FOLDER = os.getenv("DATABASE_FOLDER", "db")
 DATABASE = os.path.join(DATABASE_FOLDER, "models.db")
 
+# region Frontend Functions
 # --- Frontend-Backend Interaction Functions ---
 # These functions manage the communication between the Streamlit frontend and the FastAPI backend.
 
@@ -29,20 +30,10 @@ def clear_models():
 
     This function removes .pkl files from the MODELS_DIR. It checks for the
     existence of the directory and handles potential errors gracefully.
-    It updates the session state to inform the user about the operation's
-    success or failure.
+    It returns a status message and type.
     """
-    st.session_state["model_message"] = "Only pickle files will be deleted."
-    st.session_state["model_message_type"] = "warning"
-
     if not os.path.exists(MODELS_DIR):
-        st.session_state["model_message"] = (
-            "Models directory does not exist or is already empty."
-        )
-        st.session_state["model_message_type"] = "warning"
-        st.session_state["clear_message"] = st.session_state["model_message"]
-        st.session_state["clear_message_type"] = st.session_state["model_message_type"]
-        return
+        return "Models directory does not exist or is already empty.", "warning"
 
     try:
         for filename in os.listdir(MODELS_DIR):
@@ -50,24 +41,15 @@ def clear_models():
             if filename.endswith(".pkl") and os.path.isfile(file_path):
                 os.remove(file_path)
 
-        st.session_state["model_message"] = "Models (pickle files) cleared."
-        st.session_state["model_message_type"] = "success"
-        st.session_state["clear_message"] = st.session_state["model_message"]
-        st.session_state["clear_message_type"] = st.session_state["model_message_type"]
+        return "Models (pickle files) cleared.", "success"
 
     except OSError as e:
-        st.session_state["model_message"] = (
-            f"Error clearing models: {e}. Please check the logs."
-        )
-        st.session_state["model_message_type"] = "error"
-        st.session_state["clear_message"] = st.session_state["model_message"]
-        st.session_state["clear_message_type"] = st.session_state["model_message_type"]
         # Log the error more verbosely for debugging.
         print(f"ERROR: Failed to clear models directory: {e}")
-        if os.path.exists(MODELS_DIR):
-            print(f"ERROR: Current contents of MODELS_DIR: {os.listdir(MODELS_DIR)}")
-        else:
-            print("ERROR: MODELS_DIR does not exist")
+        print(
+            f"ERROR: Current contents of MODELS_DIR: {os.listdir(MODELS_DIR)}"
+        ) if os.path.exists(MODELS_DIR) else print("ERROR: MODELS_DIR does not exist")
+        return f"Error clearing models: {e}. Please check the logs.", "error"
 
 
 def train_model(dataset, model_name, hyperparameters):
@@ -154,9 +136,12 @@ def make_prediction(model_id, input_data):
         return None
 
 
+# endregion
+
 # region Page Settings, Title, and Cleanup Button
 # --- Streamlit Application ---
 st.set_page_config(layout="wide", page_title="AIDI Project", page_icon=":computer:")
+
 
 # Sidebar Cleanup
 st.sidebar.subheader("Cleanup")
@@ -167,17 +152,18 @@ if "clear_message" not in st.session_state:
     st.session_state["clear_message_type"] = ""
 
 if clear_button:
-    clear_models()
+    # Execute the clear_models function
+    message, message_type = clear_models()
 
+    # Overwrite the message with the result of the operation
+    st.session_state["clear_message"] = message
+    st.session_state["clear_message_type"] = message_type
+
+    # Display the message
     if st.session_state["clear_message_type"] == "error":
         st.sidebar.error(st.session_state["clear_message"], icon="🚨")
-    elif st.session_state["clear_message_type"] == "warning":
-        st.sidebar.warning(st.session_state["clear_message"], icon="⚠️")
     elif st.session_state["clear_message_type"] == "success":
         st.sidebar.success(st.session_state["clear_message"], icon="✅")
-
-    st.session_state["clear_message"] = ""
-    st.session_state["clear_message_type"] = ""
 
 
 st.title("André Lima's ML AIDI Project")
@@ -310,7 +296,7 @@ elif dataset_choice == "Upload a CSV file":
             "Please upload a CSV file. The dataset must have a column named 'target'.",
             icon="ℹ️",
         )
-st.write("---")
+st.divider()
 # endregion
 
 # region Model Selection
@@ -358,7 +344,7 @@ elif model_name == "DT - Decision Tree":
         del st.session_state["k"]
     if "C" in st.session_state:
         del st.session_state["C"]
-st.write("---")
+st.divider()
 # endregion
 
 # region Train Model
@@ -399,7 +385,7 @@ if st.button("Train Model", key="train_button"):
                     st.dataframe(report_df)
             else:
                 st.write("Something went wrong during model training.")
-st.write("---")
+st.divider()
 # endregion
 
 # region Predict
@@ -446,5 +432,5 @@ else:
                 st.success(f"Prediction: {prediction_result['prediction']}")
             except requests.exceptions.RequestException as e:
                 st.error(f"Error during prediction: {e}")
-st.write("---")
+st.divider()
 # endregion
