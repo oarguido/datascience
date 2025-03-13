@@ -113,13 +113,14 @@ def train_model(dataset, model_name, hyperparameters):
         return None, None
 
 
-def make_prediction(model_id, input_data):
+def make_prediction(model_id, input_data, dataset_choice):
     """
     Sends a prediction request to the FastAPI backend.
 
     Args:
         model_id (str): The ID of the model to use for prediction.
         input_data (list): The input data for the prediction.
+        dataset_choice (str): The dataset used for training ("Iris Dataset" or "Upload a CSV file")
 
     Returns:
         dict: The prediction result, or None if an error occurs.
@@ -130,6 +131,18 @@ def make_prediction(model_id, input_data):
         response = requests.post(f"{API_BASE_URL}/predict", json=payload)
         response.raise_for_status()
         prediction_result = response.json()
+        # Enhance prediction result for Iris dataset
+        if dataset_choice == "Iris Dataset":
+            iris_target_names = {
+                0: "setosa",
+                1: "versicolor",
+                2: "virginica",
+            }
+            predicted_class = prediction_result["prediction"]
+            prediction_result["prediction_name"] = iris_target_names.get(
+                predicted_class, "Unknown"
+            )
+
         return prediction_result
     except requests.exceptions.RequestException as e:
         st.error(f"Error during prediction: {e}")
@@ -422,15 +435,23 @@ else:
     if st.button("Make Prediction", key="predict_button"):
         with st.spinner("Predicting..."):
             try:
-                payload = {
-                    "model_id": st.session_state.model_id,
-                    "input_data": input_values,
-                }
-                response = requests.post(f"{API_BASE_URL}/predict", json=payload)
-                response.raise_for_status()
-                prediction_result = response.json()
-                st.success(f"Prediction: {prediction_result['prediction']}")
+                prediction_result = make_prediction(
+                    st.session_state.model_id,
+                    input_values,
+                    st.session_state.dataset_choice,
+                )
+                if prediction_result:
+                    if "prediction_name" in prediction_result:
+                        st.success(
+                            f"Prediction: {prediction_result['prediction']} ({prediction_result['prediction_name']})"
+                        )
+                    else:
+                        st.success(f"Prediction: {prediction_result['prediction']}")
+                else:
+                    st.error("Error: Prediction result is None.")
+
             except requests.exceptions.RequestException as e:
                 st.error(f"Error during prediction: {e}")
+
 st.divider()
 # endregion

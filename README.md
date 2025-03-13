@@ -7,17 +7,15 @@ This project demonstrates a simple machine learning application that allows you 
 ## Project Components
 
 *   **`app.py` (Frontend - Streamlit):** Provides the user interface for data selection, model selection, hyperparameter tuning, model training, and displaying results.
-*   **`main.py` (Backend - FastAPI):** Defines the API endpoints for data storage, model training, and prediction. It handles the logic for interacting with the database and training machine learning models.
+*   **`main.py` (Backend - FastAPI):** Defines the API endpoints for model training and prediction. It handles the logic for interacting with the database, storing models, and training machine learning models.
 *   **`database.py` (Database):** Contains the code for database setup, model definition, and database interaction functions. It provides an abstraction layer for working with the database, making it easier to manage and maintain.
 *   **`models/` (Directory):** Stores the trained machine learning models as pickle (`.pkl`) files.
 *   **`db/` (Directory):** Contains the SQLite database file (`models.db`) used to store model information and predictions.
-*   **`.env` (File):** Stores environment variables (e.g., ports, directory paths).
-*   **`requirements.txt` (File):** Lists the Python dependencies required to run the project.
+*   **`.env` (File):** Stores environment variables (e.g., ports, directory paths) that configure both the frontend and backend.
+*   **`requirements.txt` (File):** Lists all Python dependencies required to run both the FastAPI backend and the Streamlit frontend.
 *   **`docker-compose.yml` (File):** Defines the Docker Compose configuration for building and running the application containers.
-*   **`fastapi/` (Directory):** Contains the `Dockerfile.fastapi` to build the FastAPI backend image.
-    *   **`Dockerfile.fastapi`:** The Dockerfile for building the FastAPI backend image.
-*   **`streamlit/` (Directory):** Contains the `Dockerfile.streamlit` to build the Streamlit frontend image.
-    *   **`Dockerfile.streamlit`:** The Dockerfile for building the Streamlit frontend image.
+*   **`Dockerfile.fastapi`:** The Dockerfile for building the FastAPI backend image.
+*   **`Dockerfile.streamlit`:** The Dockerfile for building the Streamlit frontend image.
 
 ## Features
 
@@ -25,7 +23,7 @@ This project demonstrates a simple machine learning application that allows you 
 *   **Model Selection:** Train k-Nearest Neighbors (kNN), Support Vector Machine (SVM), or Decision Tree (DT) models.
 *   **Hyperparameter Tuning:** Adjust model hyperparameters through sliders and select boxes.
 *   **Model Training:** Train selected models with the chosen dataset and hyperparameters.
-*   **Metric Display:** View model metrics (accuracy, confusion matrix, classification report).
+*   **Metric Display:** View model metrics (F1-Score, confusion matrix, classification report).
 *   **Prediction:** Make predictions on new data using a trained model.
 *   **Model Cleanup:** Clear trained models (pickle files).
 *   **Containerized:** The application is fully containerized using Docker containers.
@@ -44,13 +42,14 @@ This project demonstrates a simple machine learning application that allows you 
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/oarguido/datascience.git
+    git clone https://github.com/oarguido/aidi-project.git
     ```
+    Remember to replace it with your repo path.
 
 2.  **Navigate to the project directory:**
 
     ```bash
-    cd datascience
+    cd aidi-project
     ```
 
 3.  **Create a `.env` file:**
@@ -65,6 +64,11 @@ This project demonstrates a simple machine learning application that allows you 
         DATABASE_FOLDER=db
         ```
 
+        * **`FASTAPI_PORT`**: The port where the FastAPI backend will be accessible from outside the container. (default: 8000). If this port is already in use, you may need to change it.
+        * **`STREAMLIT_PORT`**: The port where the Streamlit frontend will be accessible from outside the container. (default: 8501). If this port is already in use, you may need to change it.
+        * **`MODELS_DIR`**: The path where the model files (`.pkl`) are going to be stored. (default: `models`).
+        * **`DATABASE_FOLDER`**: The path where the database file (`.db`) is going to be stored. (default: `db`).
+
 4.  **Create `models` and `db` folders**: Create both folders in the root directory of your project.
 
 5. **Verify the files:** Verify that the following files are present in the root folder of your project:
@@ -75,39 +79,48 @@ This project demonstrates a simple machine learning application that allows you 
     * `requirements.txt`
     * `.env`
     * `docker-compose.yml`
-    * `fastapi/Dockerfile.fastapi`
-    * `streamlit/Dockerfile.streamlit`
+    * `Dockerfile.fastapi`
+    * `Dockerfile.streamlit`
+    * `models` (folder)
+    * `db` (folder)
 
 ## Running the Application (Docker Compose)
 
 1.  **Build and run the Docker containers:**
 
     ```bash
-    docker-compose up --build
+    docker compose up --build -d
     ```
 
     This will:
 
-    *   Build the Docker images for the `fastapi` (backend) and `streamlit` (frontend) services.
-    *   Start the containers for both services.
+    *   Build the Docker images for the `fastapi` (backend) and `streamlit` (frontend) services, if they don't exist or if there are changes in the code.
+    *   Start the containers for both services in detached mode (`-d`).
+    *   The first time it will take some time to build the images.
 
 2.  **Access the application:**
 
-    *   **Streamlit Frontend:** Open your web browser and go to `http://localhost:8501`.
-    *   **FastAPI Backend:** The FastAPI documentation will be available at `http://localhost:8000/docs`.
+    *   **Streamlit Frontend:** Open your web browser and go to `http://localhost:8501` (or the port you defined in the `STREAMLIT_PORT` variable).
+    *   **FastAPI Backend:** The FastAPI documentation will be available at `http://localhost:8000/docs` (or the port you defined in the `FASTAPI_PORT` variable).
+
+3. **Stop the application:**
+    ```bash
+    docker compose down
+    ```
 
 ## Using the Application
 
 1.  **Choose a Dataset:** In the Streamlit app, select "Iris Dataset" or "Upload a CSV file." If you upload a CSV, make sure it has a `target` column.
 2.  **Choose a Model:** Select the machine learning model you want to train.
 3.  **Set Hyperparameters:** Adjust the hyperparameters for the selected model using the provided controls.
-4.  **Train the Model:** Click the "Train Model" button. You'll see the model's metrics once training is complete.
-5.  **Make a Prediction:** Enter input values for each feature to make a prediction with the trained model.
-6. **Clean up:** On the sidebar you will find a "Clear Models" button. You can use it to remove the pickle files.
+4.  **Train the Model:** Click the "Train Model" button. You'll see the model's metrics (F1-Score, confusion matrix and classification report) once training is complete.
+5.  **Make a Prediction:** Enter input values for each feature (sepal length, sepal width, petal length and petal width) to make a prediction with the trained model.
+6. **Clean up:** On the sidebar you will find a "Clear Models" button. You can use it to remove the pickle files that are stored on the `models` folder.
 
 ## Cleanup
 
-* **Clear Models:** The "Clear Models" button in the sidebar will remove all the trained models (pickle files).
+* **Clear Models:** The "Clear Models" button in the sidebar will remove all the trained models (pickle files) from the `models` folder.
+* **Stop the Application:** Use the `docker compose down` command to stop the application and remove the containers.
 
 ## Contributing
 

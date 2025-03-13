@@ -4,5 +4,5 @@ pandas
 scikit-learn
 requests
 streamlit
-python-multipart
-python-dotenv
+python-multipart # For CSV uploads
+python-dotenv # Load .env files
