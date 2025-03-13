@@ -132,4 +132,4 @@ MIT License
 
 ## Contact
 
-André Lima / University of Aveiro - andre.lima@ua.pt
+André Lima / University of Aveiro - https://orcid.org/my-orcid?orcid=0000-0001-5505-1233
