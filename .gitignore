@@ -8,3 +8,24 @@ models/*
 
 # Database
 db/*
+
+# IDE / Editor
+.vscode/      # VS Code
+
+# Coverage Reports
+.coverage
+
+# Distributions
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+logs/
+
+# Virtual Environment
+venv/
+.venv/
+*/venv/ # For any subdirectories with venv
+*/.venv/ #For any subdirectories with .venv
