@@ -1,6 +1,6 @@
 # AIDI Machine Learning Project: Model Training and Prediction
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 This project demonstrates a simple machine learning application that allows you to train various models (k-Nearest Neighbors, Support Vector Machine, and Decision Tree) on datasets (Iris or custom CSV) and make predictions using the trained models. The application consists of a Streamlit frontend, a FastAPI backend, and an SQLite database. The application is fully containerized using Docker.
 
@@ -128,7 +128,7 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 ## License
 
-MIT License
+[MIT License](LICENSE)
 
 ## Contact
 
