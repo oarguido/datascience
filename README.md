@@ -81,8 +81,6 @@ This project demonstrates a simple machine learning application that allows you 
     * `docker-compose.yml`
     * `Dockerfile.fastapi`
     * `Dockerfile.streamlit`
-    * `models` (folder)
-    * `db` (folder)
 
 ## Running the Application (Docker Compose)
 
