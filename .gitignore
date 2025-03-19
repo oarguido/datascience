@@ -5,9 +5,11 @@ __pycache__/
 
 # Models
 models/*
+models/
 
 # Database
 db/*
+db/
 
 # IDE / Editor
 .vscode/      # VS Code
